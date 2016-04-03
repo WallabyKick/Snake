@@ -5,38 +5,41 @@
 
 struct Field{
 	SDL_Rect box;
-	int type,																		// 0 - Пустота,  1 - Стены, 2 - Голова змеи, 3 - тело змеи, 4 - фрукт.
-		dir;																		// 4 - вправо, 6 - влево, 8 - вверх, 2 - вниз
+	int type,																		// 0 - РџСѓСЃС‚РѕС‚Р°,  1 - РЎС‚РµРЅС‹, 2 - Р“РѕР»РѕРІР° Р·РјРµРё, 3 - С‚РµР»Рѕ Р·РјРµРё, 4 - С„СЂСѓРєС‚.
+		dir;																		// 4 - РІРїСЂР°РІРѕ, 6 - РІР»РµРІРѕ, 8 - РІРІРµСЂС…, 2 - РІРЅРёР·
 }Element[32][24];
-
-char string[100], stringNEW[100]="             SCORE: \0", num[5];								// Вывод текста
+SDL_Rect MenuRect[5];
+SDL_Point Point;
+SDL_Window *window;
 SDL_Renderer *render;
-int Restart = 0,
+int width=1024,
+	height=800,
+	Restart = 0,
 	GamePause=0,
-	direct = 6,																		// Изначально направление головы змеи
-	antidirect = 4,																	// АНТИСАМОПОЕДАНИЕ
-	body,																			// Длинна тела змеи
-	menu=0;																			// Индекс меню
+	direct = 6,																		// РР·РЅР°С‡Р°Р»СЊРЅРѕ РЅР°РїСЂР°РІР»РµРЅРёРµ РіРѕР»РѕРІС‹ Р·РјРµРё
+	antidirect = 4,																	// РђРќРўРРЎРђРњРћРџРћР•Р”РђРќРР•
+	body,																			// Р”Р»РёРЅРЅР° С‚РµР»Р° Р·РјРµРё
+	menu=0;																			// РРЅРґРµРєСЃ РјРµРЅСЋ
 
 
-void fruit(){																		// Функция генерации фрукта
+void fruit(){																		// Р¤СѓРЅРєС†РёСЏ РіРµРЅРµСЂР°С†РёРё С„СЂСѓРєС‚Р°
 	int x,y;
 	x=rand()%30+1;
 	y=rand()%22+1;
 	while(Element[x][y].type==2||Element[x][y].type==3){
-	x=rand()%30+1;
-	y=rand()%22+1;
+		x=rand()%30+1;
+		y=rand()%22+1;
 	}
 	SDL_SetRenderDrawColor(render, 20, 20, 20, 255);
 	SDL_RenderFillRect(render,&Element[x][y].box);
-	Element[x][y].box.x=x*32+1;
-	Element[x][y].box.y=y*32+1;
-	Element[x][y].box.h=30;
-	Element[x][y].box.w=30;
+	Element[x][y].box.x=x*32;
+	Element[x][y].box.y=y*32;
+	Element[x][y].box.h=32;
+	Element[x][y].box.w=32;
 	Element[x][y].type=4;
 }
 
-void assignment(){																	// Функция старта/рестарта игры
+void assignment(){																	// Р¤СѓРЅРєС†РёСЏ СЃС‚Р°СЂС‚Р°/СЂРµСЃС‚Р°СЂС‚Р° РёРіСЂС‹
 	int x,y;
 	direct = 6;
 	for (x=0; x<32; x++)
@@ -67,333 +70,308 @@ void assignment(){																	// Функция старта/рестарта игры
 		fruit();
 };
 
-Uint32 callbackrender(Uint32 interval, void *param){								// Функция отрисовки элементов
+Uint32 callbackrender(Uint32 interval, void *param){								// Р¤СѓРЅРєС†РёСЏ РѕС‚СЂРёСЃРѕРІРєРё СЌР»РµРјРµРЅС‚РѕРІ
+	char string[100], num[5];														// Р’С‹РІРѕРґ С‚РµРєСЃС‚Р°
 	int x,y;
+	SDL_SetRenderDrawColor(render, 0, 0, 0, 255);
+	SDL_RenderClear(render);
 	for (x=0; x<32; x++)
 		for (y=0; y<24; y++){
 			switch(Element[x][y].type){
-				case 0:																// Пустота
-					Element[x][y].box.x=x*32;
-					Element[x][y].box.y=y*32;
-					Element[x][y].box.h=32;
-					Element[x][y].box.w=32;
-					SDL_SetRenderDrawColor(render, 20, 20, 20, 255);
-					break;
-				case 1:																// Стены
-					SDL_SetRenderDrawColor(render, 175, 175, 175, 255);
-					break;
-				case 2:																// Голова
-					Element[x][y].box.x=x*32;
-					Element[x][y].box.y=y*32;
-					Element[x][y].box.h=32;
-					Element[x][y].box.w=32;
-					SDL_SetRenderDrawColor(render, 150, 220, 0, 255);
-					break;
-				case 3:																// Тело
-					Element[x][y].box.x=x*32;
-					Element[x][y].box.y=y*32;
-					Element[x][y].box.h=32;
-					Element[x][y].box.w=32;
-					SDL_SetRenderDrawColor(render, 150, 220, 0, 255);
-					SDL_RenderFillRect(render,&Element[x][y].box);
-					Element[x][y].box.x=32*x+2;
-					Element[x][y].box.y=32*y+2;
-					Element[x][y].box.h=28;
-					Element[x][y].box.w=28;
-					SDL_SetRenderDrawColor(render, 25, 150, 0, 255);
-					break;
-				case 4:																// Фрукт
-					Element[x][y].box.x=x*32;
-					Element[x][y].box.y=y*32;
-					Element[x][y].box.h=32;
-					Element[x][y].box.w=32;
-					SDL_SetRenderDrawColor(render, 20, 20, 20, 255);
-					SDL_RenderFillRect(render,&Element[x][y].box);
-					Element[x][y].box.x=32*x+2;
-					Element[x][y].box.y=32*y+2;
-					Element[x][y].box.h=28;
-					Element[x][y].box.w=28;
-					SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
-					break;
+			case 0:																// РџСѓСЃС‚РѕС‚Р°
+				SDL_SetRenderDrawColor(render, 20, 20, 20, 255);
+				SDL_RenderFillRect(render,&Element[x][y].box);
+				break;
+			case 1:																// РЎС‚РµРЅС‹
+				SDL_SetRenderDrawColor(render, 175, 175, 175, 255);
+				SDL_RenderFillRect(render,&Element[x][y].box);
+				break;
+			case 2:																// Р“РѕР»РѕРІР°
+				SDL_SetRenderDrawColor(render, 150, 220, 0, 255);
+				SDL_RenderFillRect(render,&Element[x][y].box);
+				break;
+			case 3:																// РўРµР»Рѕ
+				SDL_SetRenderDrawColor(render, 25, 150, 0, 255);
+				SDL_RenderFillRect(render,&Element[x][y].box);
+				SDL_SetRenderDrawColor(render, 150, 220, 0, 255);
+				SDL_RenderDrawRect(render,&Element[x][y].box);
+				break;
+			case 4:																// Р¤СЂСѓРєС‚
+				SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
+				SDL_RenderFillRect(render,&Element[x][y].box);
+				SDL_SetRenderDrawColor(render, 20, 20, 20, 255);
+				SDL_RenderDrawRect(render,&Element[x][y].box);
+				break;
 			};
-			SDL_RenderFillRect(render,&Element[x][y].box);
 		};
-	WriteText(string);
+	strcpy(string,"SCORE: ");
+	_itoa_s(body,num,5,10);
+	strcat(string,num);
+	WriteText(0, string, 32, 255, 0, 0, TTF_STYLE_NORMAL, 128, 768);
 	SDL_RenderPresent(render);
 	return interval;
 }
 
-Uint32 callbackgame(Uint32 interval, void *param){									// Логика
+Uint32 callbackgame(Uint32 interval, void *param){									// Р›РѕРіРёРєР°
 	int x,y,i,j,count=0;
-	for (x=0; x<32; x++)															// Поиск текущего местоположения головы
+	for (x=0; x<32; x++)															// РџРѕРёСЃРє С‚РµРєСѓС‰РµРіРѕ РјРµСЃС‚РѕРїРѕР»РѕР¶РµРЅРёСЏ РіРѕР»РѕРІС‹
 		for (y=0; y<24; y++)
 			if (Element[x][y].type==2)
 				goto NexTurn;
-	NexTurn:
-	switch (direct){																// Перемещение головы
-		case 4:
-			if (Element[x-1][y].type==3){
-				Restart = 1;
-				return interval;
-			}
-			Element[x-1][y].type=2;
-			Element[x-1][y].dir=6;
-			break;
-		case 6:
-			if (Element[x+1][y].type==3){
-				Restart = 1;
-				return interval;
-			}
-			Element[x+1][y].type=2;
-			Element[x+1][y].dir=4;
-			break;
-		case 8:
-			if (Element[x][y-1].type==3){
-				Restart = 1;
-				return interval;
-			}
-			Element[x][y-1].type=2;
-			Element[x][y-1].dir=2;
-			break;
-		case 2:
-			if (Element[x][y+1].type==3){
-				Restart = 1;
-				return interval;
-			}
-			Element[x][y+1].type=2;
-			Element[x][y+1].dir=8;
-			break;
+NexTurn:
+	switch (direct){																// РџРµСЂРµРјРµС‰РµРЅРёРµ РіРѕР»РѕРІС‹
+	case 4:
+		if (Element[x-1][y].type==3){
+			Restart = 1;
+			return interval;
+		}
+		Element[x-1][y].type=2;
+		Element[x-1][y].dir=6;
+		break;
+	case 6:
+		if (Element[x+1][y].type==3){
+			Restart = 1;
+			return interval;
+		}
+		Element[x+1][y].type=2;
+		Element[x+1][y].dir=4;
+		break;
+	case 8:
+		if (Element[x][y-1].type==3){
+			Restart = 1;
+			return interval;
+		}
+		Element[x][y-1].type=2;
+		Element[x][y-1].dir=2;
+		break;
+	case 2:
+		if (Element[x][y+1].type==3){
+			Restart = 1;
+			return interval;
+		}
+		Element[x][y+1].type=2;
+		Element[x][y+1].dir=8;
+		break;
 	};
-			Element[x][y].type=0;
-	for (i=0; i<32; i++)															// Поиск текущего местоположения фрукта
+	Element[x][y].type=0;
+	for (i=0; i<32; i++)															// РџРѕРёСЃРє С‚РµРєСѓС‰РµРіРѕ РјРµСЃС‚РѕРїРѕР»РѕР¶РµРЅРёСЏ С„СЂСѓРєС‚Р°
 		for (j=0; j<24; j++)
 			if (Element[i][j].type==4)
 				goto FindCollisionWithFruit;
-	FindCollisionWithFruit:
-	if((i==32)&&(j==24)){															// Поедание фрукта
+FindCollisionWithFruit:
+	if((i==32)&&(j==24)){															// РџРѕРµРґР°РЅРёРµ С„СЂСѓРєС‚Р°
 		switch (Element[x][y].dir){
-			case 4:
-				Element[x][y].type=3;
-				break;
-			case 6:
-				Element[x][y].type=3;
-				break;
-			case 8:
-				Element[x][y].type=3;
-				break;
-			case 2:
-				Element[x][y].type=3;
-				break;
+		case 4:
+			Element[x][y].type=3;
+			break;
+		case 6:
+			Element[x][y].type=3;
+			break;
+		case 8:
+			Element[x][y].type=3;
+			break;
+		case 2:
+			Element[x][y].type=3;
+			break;
 		}
-	body++;
-	fruit();
+		body++;
+		fruit();
 	}
 	else{
 		i=x;
 		j=y;
-		while(count!=body){															// Перемещение тела за змеи за головой
+		while(count!=body){															// РџРµСЂРµРјРµС‰РµРЅРёРµ С‚РµР»Р° Р·Р° Р·РјРµРё Р·Р° РіРѕР»РѕРІРѕР№
 			switch (Element[i][j].dir){
-				case 4:
-					Element[i][j].type=3;
-					i=i-1;
-					Element[i][j].type=0;
-					break;
-				case 6:
-					Element[i][j].type=3;
-					i=i+1;
-					Element[i][j].type=0;
-					break;
-				case 8:
-					Element[i][j].type=3;
-					j=j-1;
-					Element[i][j].type=0;
-					break;
-				case 2:
-					Element[i][j].type=3;
-					j=j+1;
-					Element[i][j].type=0;
-					break;
+			case 4:
+				Element[i][j].type=3;
+				i=i-1;
+				Element[i][j].type=0;
+				break;
+			case 6:
+				Element[i][j].type=3;
+				i=i+1;
+				Element[i][j].type=0;
+				break;
+			case 8:
+				Element[i][j].type=3;
+				j=j-1;
+				Element[i][j].type=0;
+				break;
+			case 2:
+				Element[i][j].type=3;
+				j=j+1;
+				Element[i][j].type=0;
+				break;
 			}
-		count++;
+			count++;
 		}
 	};
-	for (x=0; x<32; x++)															// Поиск текущего местоположения головы
+	for (x=0; x<32; x++)															// РџРѕРёСЃРє С‚РµРєСѓС‰РµРіРѕ РјРµСЃС‚РѕРїРѕР»РѕР¶РµРЅРёСЏ РіРѕР»РѕРІС‹
 		for (y=0; y<24; y++)
 			if (Element[x][y].type==2)
 				goto FindCollisionWithWall;
 FindCollisionWithWall:
 	antidirect=Element[x][y].dir;
-	if (x==0||x==31||y==0||y==23){													// Опредиление столкновения головы с стеной
+	if (x==0||x==31||y==0||y==23){													// РћРїСЂРµРґРёР»РµРЅРёРµ СЃС‚РѕР»РєРЅРѕРІРµРЅРёСЏ РіРѕР»РѕРІС‹ СЃ СЃС‚РµРЅРѕР№
 		Restart = 1;
 	}
 	return interval;
 };	
 
 Uint32 MenuTexture(Uint32 interval, void *param){
-	SDL_Surface *mainMenu;
-	SDL_Texture *MainTexture;
+	int i;
+	for (i=0; i<5;i++){
+		MenuRect[i].x=0;
+		MenuRect[i].y=0;
+		MenuRect[i].w=0;
+		MenuRect[i].h=0;
+	}
+	SDL_SetRenderDrawColor(render, 10, 10, 10, 255);
+	SDL_RenderClear(render);
 	switch (menu){
 	case 0:
-			if (GamePause == 1)
-				mainMenu=SDL_LoadBMP("img/count.bmp");
-			else
-			mainMenu=SDL_LoadBMP("img/main.bmp");
+		if (GamePause == 1)
+			WriteText(1,"РџСЂРѕРґРѕР»Р¶РёС‚СЊ",  70, 255, 0, 0, TTF_STYLE_UNDERLINE, 270, 240);
+		else
+			WriteText(1,"РќР°С‡Р°С‚СЊ РёРіСЂСѓ", 70, 255, 0, 0, TTF_STYLE_UNDERLINE, 260, 240);
+		WriteText(0,"Р—РјРµР№РєР°",         150, 0, 190, 0, TTF_STYLE_UNDERLINE, 200, 10);
+		WriteText(2,"РЎР»РѕР¶РЅРѕСЃС‚СЊ",       70, 255, 0, 0, TTF_STYLE_UNDERLINE, 300, 360);
+		WriteText(3,"РћР± РёРіСЂРµ",         70, 255, 0, 0, TTF_STYLE_UNDERLINE, 350, 480);
+		WriteText(4,"Р’С‹С…РѕРґ",           70, 255, 0, 0, TTF_STYLE_UNDERLINE, 370, 600);
 		break;
 	case 1:
-		mainMenu=SDL_LoadBMP("img/level.bmp");
+		WriteText(0,"РЎР»РѕР¶РЅРѕСЃС‚СЊ",      115, 0, 190, 0, TTF_STYLE_UNDERLINE, 160, 35);
+		WriteText(1,"Р›РµРіРєР°СЏ",          70, 255, 0, 0, TTF_STYLE_UNDERLINE, 370, 240);
+		WriteText(2,"РЎСЂРµРґРЅСЏСЏ",         70, 255, 0, 0, TTF_STYLE_UNDERLINE, 350, 390);
+		WriteText(3,"РЎР»РѕР¶РЅР°СЏ",         70, 255, 0, 0, TTF_STYLE_UNDERLINE, 340, 540);
 		break;
 	case 2:
-		mainMenu=SDL_LoadBMP("img/info.bmp");
+		WriteText(0,"РћР± РёРіСЂРµ",        125, 0, 190, 0, TTF_STYLE_UNDERLINE, 250, 25);
+		WriteText(1,"Р’ РіР»Р°РІРЅРѕРµ РјРµРЅСЋ",  50, 160, 0, 160, TTF_STYLE_UNDERLINE, 520, 700);
 		break;
 	case 3:
-		mainMenu=SDL_LoadBMP("img/switchlevel.bmp");
+		WriteText(0,"Р’РЅРёРјР°РЅРёРµ!",      110, 0, 190, 0, TTF_STYLE_UNDERLINE, 200, 30);
+		WriteText(0,"РР·РјРµРЅРёРІ СЃР»РѕР¶РЅРѕСЃС‚СЊ РІРѕ",  60, 255, 0, 0, TTF_STYLE_NORMAL, 100, 210);
+		WriteText(0,"РІСЂРµРјСЏ РёРіСЂРѕРІРѕРіРѕ",        60, 255, 0, 0, TTF_STYLE_NORMAL, 100, 280);
+		WriteText(0,"РїСЂРѕС†РµСЃСЃР° РІР°Рј РїСЂРёРґРµС‚СЃСЏ", 60, 255, 0, 0, TTF_STYLE_NORMAL, 100, 350);
+		WriteText(0,"РЅР°С‡Р°С‚СЊ РёРіСЂСѓ СЃ РЅР°С‡Р°Р»Р°.", 60, 255, 0, 0, TTF_STYLE_NORMAL, 100, 420);
+		WriteText(1,"РџСЂРѕРґРѕР»Р¶РёС‚СЊ",            50, 160, 0, 160, TTF_STYLE_UNDERLINE, 350, 550);
+		WriteText(2,"Р’РµСЂРЅСѓС‚СЊСЃСЏ РІ РјРµРЅСЋ",      50, 160, 0, 160, TTF_STYLE_UNDERLINE, 250, 670);
 		break;
 	case 4:
-		mainMenu=SDL_LoadBMP("img/restart.bmp");
+		WriteText(0, "Р’С‹",             150, 255, 0, 0, TTF_STYLE_UNDERLINE, 350, 140);
+		WriteText(0, "РїСЂРѕРёРіСЂР°Р»Рё!",     150, 255, 0, 0, TTF_STYLE_UNDERLINE, 30, 350);
 		break;
 	}
-	MainTexture = SDL_CreateTextureFromSurface(render,mainMenu);
-	SDL_RenderCopy(render, MainTexture, NULL, NULL);
-	SDL_FreeSurface(mainMenu);
-	SDL_DestroyTexture(MainTexture);
+	SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
+	for (i=1; i<5; i++)
+ 	if (SDL_PointInRect(&Point,&MenuRect[i])==SDL_TRUE)
+ 		SDL_RenderDrawRect(render,&MenuRect[i]);
 	SDL_RenderPresent(render);
 	return interval;
 }
 
-Uint32 WriteText()																			//Отрисовка текста
-{
-	SDL_Color clr={255, 0, 0}; 
-	SDL_Rect dest={0, 768, 1024, 30};
+int WriteText(int rect, char text[100], int size, int fontR, int fontG, int fontB, Uint32 style,  int x, int y){
+	SDL_Color clr={fontR, fontG, fontB}; 
 	SDL_Texture *Texture;
-	TTF_Font * fnt = TTF_OpenFont("font.ttf", 30);
-	SDL_Surface * TextSurface, *text=SDL_CreateRGBSurface(0, 1024, 30, 32, 0, 0, 0, 255);
-	strcpy(string,stringNEW);
-	itoa(body,num,10);
-	strcat(string,num);
-	TextSurface = TTF_RenderText_Blended(fnt, string, clr);
-	SDL_BlitSurface(TextSurface, NULL, text, NULL);
-	Texture=SDL_CreateTextureFromSurface(render, text);
-	SDL_RenderCopy(render, Texture, NULL, &dest);
-	SDL_RenderPresent(render);
+	TTF_Font * fnt = TTF_OpenFont("menu.ttf", size);
+	SDL_Surface * TextSurface, *Surface=SDL_GetWindowSurface(window);
+	MenuRect[rect].x=x;
+	MenuRect[rect].y=y;
+	MenuRect[rect].w=0;
+	MenuRect[rect].h=0;
+	TTF_SetFontStyle(fnt, style);
+	TextSurface = TTF_RenderUTF8_Solid(fnt, text, clr);
+	SDL_BlitSurface(TextSurface, NULL, Surface, &MenuRect[rect]);
+	Texture=SDL_CreateTextureFromSurface(render, TextSurface);
+	SDL_RenderCopy(render, Texture, NULL, &MenuRect[rect]);
 	SDL_DestroyTexture(Texture);
-	SDL_FreeSurface(text);
 	SDL_FreeSurface(TextSurface);
 	TTF_CloseFont(fnt);
+	return 1;
 }
 
 
-int __stdcall WinMain(int argc, char* argv[]) {
-	SDL_Window *window;
+Uint32 __stdcall WinMain(int argc, char* argv[]) {
 	SDL_TimerID RenderTiks, GameTiks, RenderTiksMenu;
-	int x,y, buff, GameSpeed = 250;
+	int buff, GameSpeed = 250;
 	Uint32 timeout=0;
 	SDL_Event Event;
 	TTF_Init();
 	SDL_Init(SDL_INIT_EVERYTHING);
-	window = SDL_CreateWindow("The game \"Snake\". Developed by Kichuk Vasily", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1024, 800, NULL);
-	render = SDL_CreateRenderer(window, -1, NULL);
-	MenuStart:
-	SDL_RemoveTimer(GameTiks);
-	SDL_RemoveTimer(RenderTiks);
+	window = SDL_CreateWindow("Р—РјРµР№РєР°. РљСѓСЂСЃРѕРІР°СЏ СЂР°Р±РѕС‚Р° СЃС‚СѓРґРµРЅС‚Р° РіСЂСѓРїРїС‹ 15Р’Р’2 РљРёС‡СѓРє Р’.Р.", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, 0);
+	render = SDL_CreateRenderer(window, -1, 0);
+MenuStart:
 	RenderTiksMenu = SDL_AddTimer(100, MenuTexture, NULL);
 	while(1){
 		SDL_WaitEvent(&Event);
-		if (Event.type==SDL_MOUSEBUTTONUP)
-			if(Event.button.button==SDL_BUTTON_LEFT)
+		SDL_GetMouseState(&Point.x, &Point.y);
+		if((Event.type==SDL_MOUSEBUTTONUP)&&(Event.button.button==SDL_BUTTON_LEFT))
 				switch (menu){
 				case 0:
-					for (x=0; x<1024; x++)
-						for (y=0; y<800; y++){
-							if ((Event.button.x>250)&&(Event.button.y>240)&&(Event.button.x<770)&&(Event.button.y<305))
-								goto StartGame;
-							if ((Event.button.x>270)&&(Event.button.y>350)&&(Event.button.x<750)&&(Event.button.y<430)){
-								menu = 1;
-								goto nextTurn;
-							}
-							if ((Event.button.x>340)&&(Event.button.y>490)&&(Event.button.x<675)&&(Event.button.y<560)){
-								menu = 2;
-								goto nextTurn;
-							}
-							if ((Event.button.x>360)&&(Event.button.y>620)&&(Event.button.x<660)&&(Event.button.y<700))
-								exit(0);
-						}
+					if (SDL_PointInRect(&Point,&MenuRect[1])==SDL_TRUE)
+						goto StartGame;
+					if (SDL_PointInRect(&Point,&MenuRect[2])==SDL_TRUE)
+						menu = 1;
+					if (SDL_PointInRect(&Point,&MenuRect[3])==SDL_TRUE)
+						menu = 2;
+					if (SDL_PointInRect(&Point,&MenuRect[4])==SDL_TRUE)
+						exit(0);
+					break;
 				case 1:
-					for (x=0; x<1024; x++)
-						for (y=0; y<800; y++){
-							if ((Event.button.x>345)&&(Event.button.y>225)&&(Event.button.x<700)&&(Event.button.y<300)){
-								if (GamePause == 0){
-								GameSpeed = 250;
-								menu = 0;
-								goto nextTurn;
-								}
-								buff = 250;
-								menu = 3;
-							}
-							if ((Event.button.x>330)&&(Event.button.y>385)&&(Event.button.x<690)&&(Event.button.y<450)){
-								if (GamePause == 0){
-								GameSpeed = 125;
-								menu = 0;
-								goto nextTurn;
-								}
-								buff = 125;
-								menu = 3;
-							}
-							if ((Event.button.x>330)&&(Event.button.y>540)&&(Event.button.x<695)&&(Event.button.y<605)){
-								if (GamePause == 0){
-								GameSpeed = 60;
-								menu = 0;
-								goto nextTurn;
-								}
-								buff = 60;
-								menu = 3;
-							}
-						}
+					if (SDL_PointInRect(&Point,&MenuRect[1])==SDL_TRUE)
+						buff = 250;
+					if (SDL_PointInRect(&Point,&MenuRect[2])==SDL_TRUE)
+						buff = 125;
+					if (SDL_PointInRect(&Point,&MenuRect[3])==SDL_TRUE)
+						buff = 60;
+					if (GamePause == 0){
+						GameSpeed = buff;
+						menu = 0;
+					}else
+						menu = 3;
+					break;
 				case 2:
-					for (x=0; x<1024; x++)
-						for (y=0; y<800; y++)
-							if ((Event.button.x>525)&&(Event.button.y>735)&&(Event.button.x<1010)&&(Event.button.y<780)){
-								menu = 0;
-								goto nextTurn;
-							}
-							break;
+					if (SDL_PointInRect(&Point,&MenuRect[1])==SDL_TRUE)
+						menu=0;
+					break;
 				case 3:
-					for (x=0; x<1024; x++)
-						for (y=0; y<800; y++)
-							if ((Event.button.x>30)&&(Event.button.y>610)&&(Event.button.x<1010)&&(Event.button.y<725))
-								menu = 0;
-							if ((Event.button.x>560)&&(Event.button.y>610)&&(Event.button.x<975)&&(Event.button.y<660)){
-								GameSpeed = buff;
-								menu = 0;
-								GamePause=0;
-							}
-							break;
+					if (SDL_PointInRect(&Point,&MenuRect[1])==SDL_TRUE){
+						GameSpeed = buff;
+						menu = 0;
+						GamePause = 0;
+					}
+					if (SDL_PointInRect(&Point,&MenuRect[2])==SDL_TRUE)
+						menu = 0;
+					break;
 				case 4:
 					menu = 0;
-					break;
 				default:
-					break;
+						break;
 			}
-			if ((Event.key.keysym.scancode==SDL_SCANCODE_RETURN)&&(menu == 4))
+			if (Event.type==SDL_KEYUP){
+			if ((Event.key.keysym.scancode==SDL_SCANCODE_RETURN)&&(menu == 4)){
 				menu = 0;
+				timeout = SDL_GetTicks() + 500;
+			}
 			else
-				if (menu == 0)
-					goto StartGame;
-	nextTurn:
+				if ((Event.key.keysym.scancode==SDL_SCANCODE_RETURN)&&(menu == 0)&&(SDL_TICKS_PASSED(SDL_GetTicks(), timeout)))
+					break;
+			if ((Event.key.keysym.scancode==SDL_SCANCODE_ESCAPE)&&(menu == 0)&&(GamePause==1)&&(SDL_TICKS_PASSED(SDL_GetTicks(), timeout)))
+				break;
+			}
 			if (Event.type==SDL_QUIT)
 				exit(0);
-			if ((Event.key.keysym.scancode==SDL_SCANCODE_ESCAPE)&&(GamePause==1)&&(SDL_TICKS_PASSED(SDL_GetTicks(), timeout)))
-				break;
 	}
-	StartGame:
+StartGame:
 	Restart = 0;
 	SDL_RemoveTimer(RenderTiksMenu);
 	if (GamePause==0){
-	srand(time(NULL));
-	assignment();
+		srand(time(NULL));
+		assignment();
 	}
 	else
 		GamePause = 0;
-	GameunPause:
 	RenderTiks = SDL_AddTimer(15, callbackrender, NULL);
 	GameTiks = SDL_AddTimer(GameSpeed, callbackgame, NULL);
 	while(1){
@@ -436,6 +414,8 @@ int __stdcall WinMain(int argc, char* argv[]) {
 				if (!GamePause){
 					GamePause = 1;
 					timeout = SDL_GetTicks() + 1000;
+					SDL_RemoveTimer(GameTiks);
+					SDL_RemoveTimer(RenderTiks);
 					goto MenuStart;
 				}
 				break;
@@ -447,6 +427,8 @@ int __stdcall WinMain(int argc, char* argv[]) {
 			exit(0);
 		if (Restart==1){
 			menu = 4;
+			SDL_RemoveTimer(GameTiks);
+			SDL_RemoveTimer(RenderTiks);
 			goto MenuStart;
 		}
 	}
