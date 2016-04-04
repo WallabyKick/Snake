@@ -248,10 +248,6 @@ Uint32 MenuTexture(Uint32 interval, void *param){
 		WriteText(3,"Сложная",         70, 255, 0, 0, TTF_STYLE_UNDERLINE, 340, 540);
 		break;
 	case 2:
-		WriteText(0,"Об игре",        125, 0, 190, 0, TTF_STYLE_UNDERLINE, 250, 25);
-		WriteText(1,"В главное меню",  50, 160, 0, 160, TTF_STYLE_UNDERLINE, 520, 700);
-		break;
-	case 3:
 		WriteText(0,"Внимание!",      110, 0, 190, 0, TTF_STYLE_UNDERLINE, 200, 30);
 		WriteText(0,"Изменив сложность во",  60, 255, 0, 0, TTF_STYLE_NORMAL, 100, 210);
 		WriteText(0,"время игрового",        60, 255, 0, 0, TTF_STYLE_NORMAL, 100, 280);
@@ -260,6 +256,10 @@ Uint32 MenuTexture(Uint32 interval, void *param){
 		WriteText(1,"Продолжить",            50, 160, 0, 160, TTF_STYLE_UNDERLINE, 350, 550);
 		WriteText(2,"Вернуться в меню",      50, 160, 0, 160, TTF_STYLE_UNDERLINE, 250, 670);
 		break;
+	case 3:
+		WriteText(0,"Об игре",        125, 0, 190, 0, TTF_STYLE_UNDERLINE, 250, 25);
+		WriteText(1,"В главное меню",  50, 160, 0, 160, TTF_STYLE_UNDERLINE, 520, 700);
+		break;
 	case 4:
 		WriteText(0, "Вы",             150, 255, 0, 0, TTF_STYLE_UNDERLINE, 380, 140);
 		WriteText(0, "проиграли!",     150, 255, 0, 0, TTF_STYLE_UNDERLINE, 40, 350);
@@ -267,9 +267,9 @@ Uint32 MenuTexture(Uint32 interval, void *param){
 	}
 	SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
 	for (i=1; i<5; i++)
- 	if (SDL_PointInRect(&Point,&MenuRect[i])==SDL_TRUE)
-		SelectMenu = i;
- 	SDL_RenderDrawRect(render,&MenuRect[SelectMenu]);
+		if (SDL_PointInRect(&Point,&MenuRect[i])==SDL_TRUE)
+			SelectMenu = i;
+	SDL_RenderDrawRect(render,&MenuRect[SelectMenu]);
 	SDL_RenderPresent(render);
 	return interval;
 }
@@ -308,67 +308,66 @@ MenuStart:
 	while(1){
 		SDL_WaitEvent(&Event);
 		SDL_GetMouseState(&Point.x, &Point.y);
-		if (((Event.type==SDL_MOUSEBUTTONUP)&&(Event.button.button==SDL_BUTTON_LEFT)&&(SDL_PointInRect(&Point,&MenuRect[SelectMenu])==SDL_TRUE))||(Event.key.keysym.scancode==SDL_SCANCODE_RETURN)&&(SDL_TICKS_PASSED(SDL_GetTicks(), timeout))){
-				switch (menu){
-				case 0:
-					if (SelectMenu==1)
-						goto StartGame;
-					if (SelectMenu==2)
-						menu = 1;
-					if (SelectMenu==3)
-						menu = 2;
-					if (SelectMenu==4)
-						exit(0);
-					break;
-				case 1:
-					if (SelectMenu==1)
-						buff = 250;
-					if (SelectMenu==2)
-						buff = 125;
-					if (SelectMenu==3)
-						buff = 60;
-					if (GamePause == 0){
-						GameSpeed = buff;
-						menu = 0;
-					}else
-						menu = 3;
-					break;
-				case 2:
-					if (SelectMenu==1)
-						menu=0;
-					break;
-				case 3:
-					if (SelectMenu==1){
-						GameSpeed = buff;
-						menu = 0;
-						GamePause = 0;
-					}
-					if (SelectMenu==2)
-						menu = 0;
-					break;
-				case 4:
+		if (((Event.type==SDL_MOUSEBUTTONUP)&&(Event.button.button==SDL_BUTTON_LEFT)&&((menu==4)||(SDL_PointInRect(&Point,&MenuRect[SelectMenu])==SDL_TRUE)))||(Event.key.keysym.scancode==SDL_SCANCODE_RETURN)&&(SDL_TICKS_PASSED(SDL_GetTicks(), timeout))){
+			switch (menu){
+			case 0:
+				if (SelectMenu==1)
+					goto StartGame;
+				if (SelectMenu==2)
+					menu = 1;
+				if (SelectMenu==3)
+					menu = 3;
+				if (SelectMenu==4)
+					exit(0);
+				break;
+			case 1:
+				if (SelectMenu==1)
+					buff = 250;
+				if (SelectMenu==2)
+					buff = 125;
+				if (SelectMenu==3)
+					buff = 60;
+				if (GamePause == 0){
+					GameSpeed = buff;
 					menu = 0;
-				default:
-						break;
+				}else
+					menu = 2;
+				break;
+			case 2:
+				if (SelectMenu==1){
+					GameSpeed = buff;
+					menu = 0;
+					GamePause = 0;
+				}
+				if (SelectMenu==2)
+					menu = 0;
+				break;
+			case 3:
+				if (SelectMenu==1)
+					menu=0;
+				break;
+			case 4:
+				menu = 0;
+			default:
+				break;
 			}	
-				SelectMenu = 1;
-				timeout = SDL_GetTicks() + 1000;
+			SelectMenu = 1;
+			timeout = SDL_GetTicks() + 1000;
 		}
-			if (Event.type==SDL_KEYUP){
+		if (Event.type==SDL_KEYUP){
 			if ((Event.key.keysym.scancode==SDL_SCANCODE_RETURN)&&(menu == 4)){
 				menu = 0;
 				timeout = SDL_GetTicks() + 500;
 			}
 			if ((Event.key.keysym.scancode==SDL_SCANCODE_ESCAPE)&&(menu == 0)&&(GamePause==1)&&(SDL_TICKS_PASSED(SDL_GetTicks(), timeout)))
 				break;
-			if ((Event.key.keysym.scancode==SDL_SCANCODE_UP)&&(SelectMenu>1))
+			if (((Event.key.keysym.scancode==SDL_SCANCODE_UP)||(Event.key.keysym.scancode==SDL_SCANCODE_W))&&(SelectMenu>1))
 				SelectMenu--;
-			else
-				if ((Event.key.keysym.scancode==SDL_SCANCODE_DOWN)&&(SelectMenu<4))
-					SelectMenu++;
-			}
-			if (Event.type==SDL_QUIT)
-				exit(0);
+			if (((Event.key.keysym.scancode==SDL_SCANCODE_DOWN)||(Event.key.keysym.scancode==SDL_SCANCODE_S))&&(SelectMenu<(4-menu)))
+				SelectMenu++;
+		}
+		if (Event.type==SDL_QUIT)
+			exit(0);
 	}
 StartGame:
 	Restart = 0;
