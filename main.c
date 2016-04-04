@@ -8,19 +8,21 @@ struct Field{
 	int type,																		// 0 - Пустота,  1 - Стены, 2 - Голова змеи, 3 - тело змеи, 4 - фрукт.
 		dir;																		// 4 - вправо, 6 - влево, 8 - вверх, 2 - вниз
 }Element[32][24];
+
 SDL_Rect MenuRect[5];
 SDL_Point Point;
 SDL_Window *window;
 SDL_Renderer *render;
+
 int width=1024,
 	height=800,
 	Restart = 0,
 	GamePause=0,
+	SelectMenu=1,
 	direct = 6,																		// Изначально направление головы змеи
 	antidirect = 4,																	// АНТИСАМОПОЕДАНИЕ
 	body,																			// Длинна тела змеи
 	menu=0;																			// Индекс меню
-
 
 void fruit(){																		// Функция генерации фрукта
 	int x,y;
@@ -259,14 +261,15 @@ Uint32 MenuTexture(Uint32 interval, void *param){
 		WriteText(2,"Вернуться в меню",      50, 160, 0, 160, TTF_STYLE_UNDERLINE, 250, 670);
 		break;
 	case 4:
-		WriteText(0, "Вы",             150, 255, 0, 0, TTF_STYLE_UNDERLINE, 350, 140);
-		WriteText(0, "проиграли!",     150, 255, 0, 0, TTF_STYLE_UNDERLINE, 30, 350);
+		WriteText(0, "Вы",             150, 255, 0, 0, TTF_STYLE_UNDERLINE, 380, 140);
+		WriteText(0, "проиграли!",     150, 255, 0, 0, TTF_STYLE_UNDERLINE, 40, 350);
 		break;
 	}
 	SDL_SetRenderDrawColor(render, 255, 0, 0, 255);
 	for (i=1; i<5; i++)
  	if (SDL_PointInRect(&Point,&MenuRect[i])==SDL_TRUE)
- 		SDL_RenderDrawRect(render,&MenuRect[i]);
+		SelectMenu = i;
+ 	SDL_RenderDrawRect(render,&MenuRect[SelectMenu]);
 	SDL_RenderPresent(render);
 	return interval;
 }
@@ -291,7 +294,6 @@ int WriteText(int rect, char text[100], int size, int fontR, int fontG, int font
 	return 1;
 }
 
-
 Uint32 __stdcall WinMain(int argc, char* argv[]) {
 	SDL_TimerID RenderTiks, GameTiks, RenderTiksMenu;
 	int buff, GameSpeed = 250;
@@ -306,24 +308,24 @@ MenuStart:
 	while(1){
 		SDL_WaitEvent(&Event);
 		SDL_GetMouseState(&Point.x, &Point.y);
-		if((Event.type==SDL_MOUSEBUTTONUP)&&(Event.button.button==SDL_BUTTON_LEFT))
+		if (((Event.type==SDL_MOUSEBUTTONUP)&&(Event.button.button==SDL_BUTTON_LEFT)&&(SDL_PointInRect(&Point,&MenuRect[SelectMenu])==SDL_TRUE))||(Event.key.keysym.scancode==SDL_SCANCODE_RETURN)&&(SDL_TICKS_PASSED(SDL_GetTicks(), timeout))){
 				switch (menu){
 				case 0:
-					if (SDL_PointInRect(&Point,&MenuRect[1])==SDL_TRUE)
+					if (SelectMenu==1)
 						goto StartGame;
-					if (SDL_PointInRect(&Point,&MenuRect[2])==SDL_TRUE)
+					if (SelectMenu==2)
 						menu = 1;
-					if (SDL_PointInRect(&Point,&MenuRect[3])==SDL_TRUE)
+					if (SelectMenu==3)
 						menu = 2;
-					if (SDL_PointInRect(&Point,&MenuRect[4])==SDL_TRUE)
+					if (SelectMenu==4)
 						exit(0);
 					break;
 				case 1:
-					if (SDL_PointInRect(&Point,&MenuRect[1])==SDL_TRUE)
+					if (SelectMenu==1)
 						buff = 250;
-					if (SDL_PointInRect(&Point,&MenuRect[2])==SDL_TRUE)
+					if (SelectMenu==2)
 						buff = 125;
-					if (SDL_PointInRect(&Point,&MenuRect[3])==SDL_TRUE)
+					if (SelectMenu==3)
 						buff = 60;
 					if (GamePause == 0){
 						GameSpeed = buff;
@@ -332,33 +334,38 @@ MenuStart:
 						menu = 3;
 					break;
 				case 2:
-					if (SDL_PointInRect(&Point,&MenuRect[1])==SDL_TRUE)
+					if (SelectMenu==1)
 						menu=0;
 					break;
 				case 3:
-					if (SDL_PointInRect(&Point,&MenuRect[1])==SDL_TRUE){
+					if (SelectMenu==1){
 						GameSpeed = buff;
 						menu = 0;
 						GamePause = 0;
 					}
-					if (SDL_PointInRect(&Point,&MenuRect[2])==SDL_TRUE)
+					if (SelectMenu==2)
 						menu = 0;
 					break;
 				case 4:
 					menu = 0;
 				default:
 						break;
-			}
+			}	
+				SelectMenu = 1;
+				timeout = SDL_GetTicks() + 1000;
+		}
 			if (Event.type==SDL_KEYUP){
 			if ((Event.key.keysym.scancode==SDL_SCANCODE_RETURN)&&(menu == 4)){
 				menu = 0;
 				timeout = SDL_GetTicks() + 500;
 			}
-			else
-				if ((Event.key.keysym.scancode==SDL_SCANCODE_RETURN)&&(menu == 0)&&(SDL_TICKS_PASSED(SDL_GetTicks(), timeout)))
-					break;
 			if ((Event.key.keysym.scancode==SDL_SCANCODE_ESCAPE)&&(menu == 0)&&(GamePause==1)&&(SDL_TICKS_PASSED(SDL_GetTicks(), timeout)))
 				break;
+			if ((Event.key.keysym.scancode==SDL_SCANCODE_UP)&&(SelectMenu>1))
+				SelectMenu--;
+			else
+				if ((Event.key.keysym.scancode==SDL_SCANCODE_DOWN)&&(SelectMenu<4))
+					SelectMenu++;
 			}
 			if (Event.type==SDL_QUIT)
 				exit(0);
